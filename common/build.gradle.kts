@@ -6,11 +6,10 @@ plugins {
 
 kotlin {
     //select iOS target platform depending on the Xcode environment variables
+    val sdkName: String? = System.getenv("SDK_NAME")
+    val isiOSDevice = sdkName.orEmpty().startsWith("iphoneos")
     val iOSTarget: (String, KotlinNativeTarget.() -> Unit) -> KotlinNativeTarget =
-        if (System.getenv("SDK_NAME")?.startsWith("iphoneos") == true)
-            ::iosArm64
-        else
-            ::iosX64
+        if (isiOSDevice) ::iosArm64 else ::iosX64
 
     iOSTarget("ios") {
         binaries {
@@ -29,6 +28,8 @@ kotlin {
     sourceSets["androidMain"].dependencies {
         implementation("org.jetbrains.kotlin:kotlin-stdlib")
     }
+
+    // no need to include stdlib for iOS. Kotlin Native knows how to build iOS targets
 }
 
 val packForXcode by tasks.creating(Sync::class) {
@@ -50,10 +51,12 @@ val packForXcode by tasks.creating(Sync::class) {
     /// generate a helpful ./gradlew wrapper with embedded Java path
     doLast {
         val gradlew = File(targetDir, "gradlew")
-        gradlew.writeText("#!/bin/bash\n"
-                + "export 'JAVA_HOME=${System.getProperty("java.home")}'\n"
-                + "cd '${rootProject.rootDir}'\n"
-                + "./gradlew \$@\n")
+        gradlew.writeText(
+            "#!/bin/bash\n"
+                    + "export 'JAVA_HOME=${System.getProperty("java.home")}'\n"
+                    + "cd '${rootProject.rootDir}'\n"
+                    + "./gradlew \$@\n"
+        )
         gradlew.setExecutable(true)
     }
 }
