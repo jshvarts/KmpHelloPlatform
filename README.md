@@ -58,3 +58,17 @@ Once added, it will look similar to this:
 ### On every common code change
 
 For every change in the `common` code, execute `./gradlew common:build` and then run the project in XCode.
+
+### Artifacts generated
+
+* `common/commonMain` - generates Kotlin metadata. `common` target contains the common Kotlin code which is included into every platform compilation.
+* `common/androidMain` - generates JAR file.
+* `common/iosMain` - generates Apple Framework. `arm64` target generates framework for iOS device and App Store.
+`x86_64` target generates framework for iOS simulators
+
+### Expect/Actual mechanism
+
+`common` module is the only one that is allowed to have `expect` declarations. Other targets provide `actual` implementations.
+For instance, an `expect`ed class can have a constructor and therefore can be instantiated directly from common code.
+
+The compiler ensures that every `expect`ed declaration has `actual` implementation in all platform modules that implement the corresponding `common` module.
